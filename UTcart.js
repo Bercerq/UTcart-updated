@@ -3,24 +3,26 @@ let cart_overflow = document.getElementById("cart_items");
 let body = document.getElementsByTagName("body")[0];
 let container = document.getElementsByClassName("cart_container_drower")[0];
 let out_in_stock = document.getElementsByClassName("out_in_stock")[0];
-let string = document.querySelector("#all_variant_track").innerHTML;
 let cart_upsell = document.getElementsByClassName("upsell")[0];
+let objParse = JSON.parse(
+  document
+    .querySelector("#products_object")
+    .innerHTML.replace(/,\s+.+}$/gm, "}")
+);
 
 const handleAddToCart = (el, flag) => {
   let varId = flag
-    ? document.getElementById(`varId-${el.dataset.inputid}`).value
-    : window.location.search.substr(1).split("variant=")[1] || document.getElementById(`varId-${el.dataset.inputid}`).value;
-  let quantity =
-    document.getElementById(
-      `product_quantity-${window.location.search.substr(1).split("=")[1]}`
-    )?.value || 1;
-  let productParams = JSON.parse(string)
-    .split(varId)[1]
-    .split(",")[0]
-    .split(":")[1]
-    ?.split("}")[0];
-  let selling_state = productParams.split("-")[1].split('"')[0];
-  let availableQuantity = productParams.split("-")[0].split('"')[1];
+    ? window.location.search.substr(1).split("variant=")[1] ||
+      el.dataset.inputid
+    : el.dataset.inputid;
+  let quantity = document
+    .querySelector("#outside_overlay")
+    .classList.contains("active_drawer")
+    ? 1
+    : document.querySelector(`.quantity__input`)?.value || 1;
+
+  let selling_state = objParse[varId].split(" ")[0].split("-")[1];
+  let availableQuantity = objParse[varId].split(" ")[0].split("-")[0];
   let formData = {
     items: [
       {
@@ -63,8 +65,12 @@ const handleAddToCart = (el, flag) => {
             ) {
               out_in_stock.innerHTML = `Available quantity on stock - ${availableQuantity}`;
               out_in_stock.style.display = "unset";
+              document.querySelector(".product_card_collection").style.height =
+                "unset";
             } else {
               addToCartRequest(formData);
+              document.querySelector(".product_card_collection").style.height =
+                "100%";
             }
           }
         }
@@ -159,7 +165,7 @@ const updateItem = (id, qty) => {
 
 const drawItems = (el) => {
   cart_overflow.innerHTML = "<div></div>";
-  document.getElementById("cart_count").innerHTML = el?.item_count;
+  // document.getElementById("cart_count").innerHTML = el?.item_count;
   let product_item;
   if (el.item_count > 0) {
     let currencySymbol = document.querySelector("body").dataset.currencysymbol;
@@ -178,15 +184,11 @@ const drawItems = (el) => {
     shipping_bar_id.style.display = "flex";
     shipping_bar_container.style.display = "block";
     return el?.items.map((data) => {
-      let productParams = JSON.parse(string)
-        .split(data.variant_id)[1]
-        .split(",")[0]
-        .split(":")[1]
-        .split("}")[0];
-
-      let productCap = productParams.split("cap=")[1].split("=")[0];
-      let availableQuantity = productParams.split("-")[0].split('"')[1];
-      let selling_state = productParams.split("-")[1].split('"')[0];
+      let productCap = objParse[data.variant_id].split(" ")[1].split("=")[1];
+      let selling_state = objParse[data.variant_id].split(" ")[0].split("-")[1];
+      let availableQuantity = objParse[data.variant_id]
+        .split(" ")[0]
+        .split("-")[0];
       product_item = document.createElement("div").innerHTML = `
       <div class="cart_item" data-carttitle=${data.product_title}>
         <div class="item--loadbar" id="loaderId-${data.variant_id}">
@@ -195,17 +197,24 @@ const drawItems = (el) => {
 <div class="item_wrapper">
       <div class="info_box">  
         <div class="image"> 
-          <img 
+        <a href=${data.url}>
+        ${
+          data.featured_image.url
+            ? `<img 
             src=${data.featured_image.url}
             alt=${data.featured_image.alt}
             loading="lazy"
-          >
+          >`
+            : ``
+        }
+          </a>
         </div>
         <div class="info_item_title"> 
           <a href=${data.url}>${data.product_title}</a>
-        </div>     
 
+        </div>     
       </div>
+   
 
 
 <div class="item_actions_wrapper">
@@ -215,15 +224,14 @@ const drawItems = (el) => {
 <div class="upsell_cap_price_UT" id=cap_price-${data.variant_id}> 
  ${
    !isNaN(productCap) && +productCap
-     ? ((+productCap / 100) * data.quantity).toFixed(2).replace(".", ",") +
-       currencySymbol
+     ? ((+productCap / 100) * data.quantity).toFixed(2) + currencySymbol
      : ""
  }
 </div>
 
  <div class="upsell_price_UT">   
  <strong class='final_price'>${
-   (data.final_line_price / 100).toFixed(2).replace(".", ",") + currencySymbol
+   (data.final_line_price / 100).toFixed(2) + currencySymbol
  }</strong>     
   </div>
 </div>
@@ -262,9 +270,11 @@ const drawItems = (el) => {
                   />
                   <button onclick="updateItem(${data.variant_id},${
         data.quantity + 1
-      })" id='quantity_plus-${
-        data.variant_id
-      }' class="no-js-hidden" name="plus" type="button">
+      })"
+                   id='quantity_plus-${data.variant_id}'
+                   class="no-js-hidden"
+                   name="plus"
+                   type="button">
                     <span class="visually-hidden"></span>
                       +
                     </button>
@@ -274,7 +284,15 @@ const drawItems = (el) => {
       </div>  
       </div>
       </div>
-    </div>`;
+    </div>
+    <span class='available_qty'>
+    ${
+      +data.quantity === +availableQuantity
+        ? `You can only add ${availableQuantity} of this item to your cart`
+        : ""
+    }
+    </span> 
+    `;
 
       cart_overflow.innerHTML += product_item;
       if (selling_state === "deny") {
@@ -288,15 +306,15 @@ const drawItems = (el) => {
         shipping_bar_id.value = el.total_price.toFixed(2) / 100;
 
         need_to_pay.innerHTML =
-          "Añade " +
+          "Add " +
           (shipping_bar_id.max - el.total_price.toFixed(2) / 100).toFixed(2) +
           currencySymbol;
 
-        shipping_title.innerHTML = "para tener Envío Gratis";
+        shipping_title.innerHTML = "to have Free Shipping";
       } else {
         shipping_bar_id.value = el.total_price.toFixed(2) / 100;
         shipping_title.innerHTML =
-          "¡Enhorabuena! Ya tienes el <strong>Envío Gratis</strong> ";
+          "Congratulations! You already have <strong>Free Shipping</strong>";
         need_to_pay.innerHTML = "";
       }
     });
@@ -306,7 +324,10 @@ const drawItems = (el) => {
     shipping_bar_container.style.display = "none";
     product_item = document.createElement("div").innerHTML = `
       <div class='empty_cart_box checkout_button'>
-        <h2 class='empty_title'>Tu carrito está vacío</h2>
+        <h2 class='empty_title'>Your cart is empty</h2>
+        <a class='footer_button_checkout' href='collections/all'>
+           Continue shopping
+        </a>
       </div>`;
     document.getElementById("cart_footer").style.display = "none";
     cart_overflow.innerHTML += product_item;
@@ -319,9 +340,9 @@ const openCart = () => {
   body.classList.add("overflow-hidden");
   drawer_cart.style.display = "flex";
 
-  if (document.querySelector("#code").value) {
-    document.querySelector("#submit").click();
-  }
+  // if (document.querySelector("#code").value) {
+  //   document.querySelector("#submit").click();
+  // }
 
   setTimeout(() => {
     container.style.transform = "translate(0%)";

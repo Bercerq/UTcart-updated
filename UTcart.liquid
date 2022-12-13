@@ -1,11 +1,20 @@
 
 
 <div onclick="outsideClick()" id="outside_overlay" class="cart_wrapper">
-
-
-  
-  
   <div id="cart_drawer" class="cart_container_drower">
+    <script type="application/json" id="products_object"> 
+      {
+        {% for collection in collections %}
+          {% for product in collection.products  %}
+              {% for variant in product.variants | limit: 1000 %}
+              "{{ variant.id }}": "{{ variant.inventory_quantity }}-{{ variant.inventory_policy }} cap={{ variant.compare_at_price }}",
+              {% endfor %} 
+          {% endfor %} 
+        {% endfor %}
+      }
+    </script>
+
+
     <div class="drawer_header">
       <h2 class="drawer_heading"> {{ 'layout.cart.title' | t }}
       </h2>
@@ -23,7 +32,8 @@
     </div>
   </div>
 <div class="cart_overflow"> 
-  <div id="cart_items"></div>
+  <div id="cart_items">
+  </div>
   <div id="cart_upsell" class="upsell {%unless settings.upsell_setting %}disabled_upsell{%endunless%}">
 
     <div id="upsell_wrapper" data-upsellvariants="{{settings.upsell_product_variants }}" class="upsell_box">
@@ -112,11 +122,11 @@
 
               <div class="upsell_price_wrapper_UT"> 
               <div class="upsell_cap_price_UT">   
-                {{product.first_available_variant.compare_at_price | money }}
+                {{product.first_available_variant.compare_at_price | money_with_currency }}
               </div>
 
                <div class="upsell_price_UT">   
-                  {{product.first_available_variant.price | money }}
+                  {{product.first_available_variant.price |  money_with_currency }}
                 </div>
               </div>
 
@@ -128,6 +138,9 @@
                  id="varId-{{product.first_available_variant.id}}"
                  value="{{product.first_available_variant.id}}"
                  data-inputid="{{ product.first_available_variant.id }}"
+                 data-cap="{{product.selected_or_first_available_variant.compare_at_price}}"
+                 data-invPol="{{product.selected_or_first_available_variant.inventory_policy}}"
+                 data-avabil="{{product.selected_or_first_available_variant.inventory_quantity}}"
                  class="footer_button footer_id-{{product.first_available_variant.id}}"
                  type="button" 
                 
@@ -145,7 +158,6 @@
     </div>
   </div>
 </div>
-<div class="out_in_stock">Selected product quantity out in stock!</div>
   
   <div class="drawer_footer" id="cart_footer">
     <div
@@ -159,7 +171,7 @@
      </div>
    </div>
 
-    {%- if settings.show_cart_note -%}
+    {%- if settings.show_cart_note_UT -%}
     <details class="cart_note_drawer" id="Details-CartDrawer">
       <summary>
         <span class="summary__title">
@@ -173,7 +185,7 @@
   {%- endif -%}
   
 
-<div class="drawer_footer__discount">
+<!-- <div class="drawer_footer__discount">
   <div class="icart-coupon-code-svg icart-add-coupon-code">
     <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" 
     version="1.1" id="Capa_1" x="0px" y="0px" viewBox="0 0 512 512" 
@@ -187,7 +199,7 @@
     <span class="icart-coupon-code-text-close" style="color: rgb(0, 0, 0);">{{ 'layout.cart.formClose' | t }}</span>  
   </div>
 
-</div>
+</div> -->
     <div class="checkout_button" {{ block.shopify_attributes }}>
       <noscript>
         <button class="footer_button_checkout" type="submit" form="CartDrawer-Form">
@@ -198,13 +210,13 @@
       <a href='/checkout' class="footer_button_checkout" id="CartDrawer-Checkout"  name="checkout" form="CartDrawer-Form"{% if cart == empty %} disabled{% endif %}>
         {{ 'layout.cart.checkout' | t }}
       </a>
-      <div class="shipping_container">
+      <!-- <div class="shipping_container">
         <div class="progress_shipping ">
           <span>
             {{ 'layout.cart.klarna_clearpay' | t }}  <img src="https://cdn.shopify.com/s/files/1/0271/4101/3538/t/30/assets/1662027560.png?v=1662027561" style="width: 150px;" class="fr-fic fr-dib" data-code="1">
           </span>
       </div>
-      </div>
+      </div> -->
     </div>
 
   </div>
@@ -213,24 +225,11 @@
 
 </div>
 
-<script>
-  let discountBtn = document.querySelector(".icart-coupon-code-svg");
- 
-  discountBtn.addEventListener("click", function() {
-    this.classList.toggle("isActive")
-    let discountForm = document.querySelector(".scDiscount__container");
-    discountForm.classList.toggle("isActive")
-    
-  })
-
-
-</script>
 <style>
   s > .money.mw-price{
     text-decoration: line-through !important;
     text-decoration-color: red !important;
     opacity: 1 !important;
-    font-family: Poppins;
     font-weight: 500;
     font-size: 17px;
   }
@@ -576,11 +575,22 @@
   padding: 0 30px;
 }
 
+.cart_overflow.__disabledContainer .cart_item quantity-input {
+  pointer-events: none;
+  opacity: 0.5;
+}
+
 .cart_item {
   align-items: center;
   display: flex;
   margin-top: 30px;
   position: relative;
+}
+.cart_item.__disablebBTN quantity-input button[name="plus"] {
+  pointer-events: none;
+}
+.cart_item.__disabledContainer {
+  pointer-events: none;
 }
 .item--loadbar {
   height: 4px;
@@ -648,7 +658,11 @@
   height: 65px;
     width: 65px;
 }
-.image > img {
+.available_qty{
+  font-size: 13px;
+  width:70%
+}
+.image > a > img {
   object-fit: cover;
   height:100%;
   width: 100%;
@@ -675,19 +689,18 @@ margin-left: 15px;
 }
 .info_item_title{
   font-weight: bold; 
-  /* text-overflow: ellipsis; */
-  /* white-space: nowrap; */
   max-width: 83%;
   overflow: hidden;
-  font-family: 'Poppins';
   font-style: normal;
   font-weight: 400;
-  /* font-size: 18px; */
   font-size: 16px;
   margin-left: 15px;
-  /* text-overflow: ellipsis; */
   width: 170px;
   text-align: start;
+}
+.info_item_title a{
+color: black;
+text-decoration: none;
 }
 
 .upsell_title_UT{
@@ -726,7 +739,14 @@ margin-left: 15px;
   .drawer_footer{
   padding-bottom: 95px;
 }}
-
+@media(max-width:340px){
+  .actions{
+    justify-content: start;
+  }
+  .upsell_price_wrapper_UT{
+    justify-content: center;
+  }
+}
 .drawer_header {
   position: relative;
   display: flex;
@@ -741,17 +761,15 @@ margin-left: 15px;
   font-weight: 600;
 }
 .drawer_close {
-  font-family: Poppins;
   color: black;
   display: inline-block;
   padding: 0;
   min-width: 4.4rem;
   min-height: 4.4rem;
   position: absolute;
-  top: 0px;
     font-size: 28px;
     font-weight: 600;
-  right: -10px;
+  right: 20px;
   background-color: transparent;
   border: none;
   cursor: pointer;
@@ -777,7 +795,10 @@ margin-left: 15px;
   -webkit-appearance: none;
   appearance: none;
   background-color: rgba(18, 18, 18, 1);
-  font-family: Poppins;
+}
+.footer_button:hover{
+  opacity: .7;
+  color: #fff;
 }
 
 .remoove_button {
@@ -797,7 +818,7 @@ margin-left: 15px;
 }
 .empty_title {
   text-align: center;
-  font-size: 14px;
+  font-size: 16px;
 }
 .empty_cart_box {
   /* margin-top: 25vh; */
@@ -812,7 +833,11 @@ margin-left: 15px;
 }
 .out_in_stock {
   display: none;
+  padding: 10px 30px;
+  font-size: 16px;
+  font-weight: 500;
 }
+
 .final_price {
   font-weight: 500;
   font-size: 16px;
@@ -852,27 +877,28 @@ margin-left: 15px;
 }
 
 .quantity_selector button:first-child {
-  border-right: 1px solid #CCCCCC;
+  border:none;
   color: #868489;
-    max-width: 26px;
-    -webkit-appearance:none  ;  height: 100%;
-
-    /*  */
-    padding: 0 6px;
+  max-width: 26px;
+  -webkit-appearance:none;
+  height: 100%;
+  background-color: white;
+  cursor: pointer;
+  padding: 0 6px;
+  border-radius: 50%;
 }
 
 
 .quantity_selector button:last-child {
-  border-left: 1px solid #CCCCCC;
+  border:none;
   color: #868489;
+  background-color: white;
+  cursor: pointer;
   max-width: 26px;
-  -webkit-appearance:none ; 
-   height: 100%;
-
-   /*  */
-   padding: 0 6px;
-
-
+  -webkit-appearance:none; 
+  height: 100%;
+  border-radius: 50%;
+  padding: 0 6px;
 }
 
 
@@ -955,7 +981,6 @@ progress::-webkit-progress-value {
   font-weight: 600;
 }
 .total_price_footer span {
-  font-family: Poppins;
   font-weight: 500;
   font-size: 17px;
   color: #000000;
