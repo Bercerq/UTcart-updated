@@ -24,7 +24,7 @@
     <div id="shipping_bar_container" class="progress_shipping {%unless settings.shipping_bar %}disabled_shipping{%endunless%}"> 
 
       <div class="title_box">
-      <strong id="need_to_pay"> </strong>
+      <span class="money" id="need_to_pay"> </span>
       <h4 id="shipping_title"></h4>
     </div>
      <progress id="shipping_bar_id" value="0" max="{{ settings.price_for_free_shippin }}"></progress>
@@ -164,7 +164,7 @@
     {{ block.shopify_attributes }}>
      <div class="total_price_footer" role="status">
       Subtotal
-       <span id="total_checkout_price"></span>
+       <span class='money' id="total_checkout_price"></span>
      </div>
      <div class="discount_price_UT">
 
@@ -364,7 +364,7 @@
   margin: 20px;
   height: calc(100vh - 40px);
   width: 460px;
-  border-radius: 18px 18px 15px 15px;
+  /* border-radius: 18px 18px 15px 15px; */
   border: 0.1rem solid rgba(18, 18, 18, 0.2);
   border-right: 0;
   background-color: rgb(255, 255, 255);
@@ -417,6 +417,7 @@
   text-align: center;
 }
 .footer_button_checkout {
+  font-family: Rajdhani;
   padding: 10px 0;
   width: 300px;
   font-size: 17px;
@@ -432,9 +433,10 @@
   transition: box-shadow 0.1s ease;
   -webkit-appearance: none;
   appearance: none;
-  border-radius: 22px;
   margin: 10px 0;
-  background-color: #121212;
+  
+  color: #121212;
+  background-color: #FFC000;
   font-weight: 600;
 }
 
@@ -659,6 +661,7 @@
     width: 65px;
 }
 .available_qty{
+  font-family: Rajdhani;
   font-size: 13px;
   width:70%
 }
@@ -697,22 +700,31 @@ margin-left: 15px;
   margin-left: 15px;
   width: 170px;
   text-align: start;
+  font-family: Rajdhani;
 }
 .info_item_title a{
 color: black;
 text-decoration: none;
+font-family: Rajdhani;
+font-weight: 500;
+}
+.upsell_price_UT {
+  font-family: Rajdhani;
+  font-weight: 500;
 }
 
 .upsell_title_UT{
   font-weight: 600;
   line-height:1.2;
-
+  font-family: Rajdhani;
+  font-weight: 500;
 }
 
 
 #CartDrawer-Checkout:hover{
-  opacity:.7;
-  color:#fff;
+  transition: all 0.3s;
+  color:#FFC000;
+  background-color: #000;
 }
 
 
@@ -755,6 +767,7 @@ text-decoration: none;
   padding: 7px 30px 4px;
 }
 .drawer_heading {
+  font-family: Rajdhani;
   margin: 1rem 0;
   /* font-size: 25px; */
   font-size: 40px;
@@ -785,7 +798,7 @@ text-decoration: none;
   justify-content: center;
   align-items: center;
   border: 0;
-  border-radius: 22px;
+  /* border-radius: 22px; */
   margin-top: 15px;
   cursor: pointer;
   padding: 5px 19px;
@@ -794,11 +807,14 @@ text-decoration: none;
   transition: box-shadow 0.1s ease;
   -webkit-appearance: none;
   appearance: none;
-  background-color: rgba(18, 18, 18, 1);
+  color: rgba(18, 18, 18, 1);
+  background-color: #FFC000;
+  transition:  all 0.3s;
 }
 .footer_button:hover{
-  opacity: .7;
-  color: #fff;
+  color: #FFC000;
+  background-color: #000000;
+  transition:  all 0.3s;
 }
 
 .remoove_button {
@@ -817,6 +833,7 @@ text-decoration: none;
   opacity: 0.3;
 }
 .empty_title {
+  font-family: Rajdhani;
   text-align: center;
   font-size: 16px;
 }
@@ -837,12 +854,18 @@ text-decoration: none;
   font-size: 16px;
   font-weight: 500;
 }
-
+.out_in_stock_hidden{
+  display: none;
+  padding: 10px 30px;
+  font-size: 16px;
+  font-weight: 500;
+}
 .final_price {
   font-weight: 500;
   font-size: 16px;
   color: #000000;
   margin-bottom: 30px;
+  font-family: Rajdhani;
 }
 
 .subtotal_price {
@@ -947,11 +970,16 @@ text-decoration: none;
   align-items: center;
   padding: 10px 0;
 }
+
+.title_box .money{
+  font-weight: bold;
+}
 .title_box h4{
   margin: 0 8px;
   font-weight: 400;
   letter-spacing: unset;
   font-size: 17px;
+  font-family: Rajdhani;
 }
 progress {
   border-radius: 5px;
@@ -971,6 +999,7 @@ progress::-webkit-progress-value {
 }
 
 .total_price_footer {
+  font-family: Rajdhani;
   display: flex;
   align-items: center;
   justify-content: space-between;
