@@ -492,7 +492,13 @@ const removeUnusedUpsellProduct = (handle) => {
         product.variants.map((data) => {
           document.querySelectorAll(".item--loadbar").forEach((el) => {
             if (data.id === +el.id.split("-")[1]) {
-              updateItem(data.id, 0);
+              updateItem({
+                dataset: {
+                  prodid: data.id,
+                  prodqty: 0,
+                  prodhandle: handle,
+                },
+              });
             }
           });
         });
